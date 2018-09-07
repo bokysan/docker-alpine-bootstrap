@@ -14,6 +14,7 @@ Currently available:
 - sed
 - wget
 - xz
+- postgres client (psql)
 - vim (who can live without it)
 
 I might consider adding python and perl in the future.
