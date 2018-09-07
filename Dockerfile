@@ -4,9 +4,10 @@ LABEL maintainer="Bojan Cekrlic - https://github.com/bokysan/docker-alpine-boots
 # See README.md for details
 
 # Install basic set of tools
-COPY  files/* /
 RUN   \
       apk add --no-cache --upgrade && \
       apk add --no-cache --update bash curl wget unzip tar xz sed gawk vim postgresql-client libressl && \
       (rm "/tmp/"* 2>/dev/null || true) && (rm -rf /var/cache/apk/* 2>/dev/null || true)
+# Instal fabric8 wait tool
+COPY  files/* /usr/local/bin/
 
