@@ -15,6 +15,7 @@ Currently available:
 - wget
 - xz
 - postgres client (psql)
+- libressl (openssl fork)
 - vim (who can live without it)
 
 I might consider adding python and perl in the future.
