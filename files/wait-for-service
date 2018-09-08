@@ -1,0 +1,181 @@
+#!/bin/bash
+# vim: set tabstop=2 softtabstop=2 shiftwidth=2 expandtab:
+#
+# Wait for a service to be available, sequentially.
+#
+#
+# Parameters: a list of services to wait for
+#
+# Supported services:
+# - http:  http(s)://<url> -- waits for a 2xx response
+# - postgres: postgres://<user>@<host>:<port> - uses pg_isready
+# - tcp: tcp://<host>:<port> - tries to succesfully connect to the specific host
+red="\033[38;5;196m"
+yellow="\033[38;5;184m"
+orange="\033[38;5;209m"
+green="\033[38;5;35m"
+gray="\033[38;5;243m"
+blueish="\033[38;5;109m"
+cyan="\033[38;5;87m"
+reset="\033[0m"
+
+up="\033[38;5;118m⬆ SERVICE UP${reset}"
+down="\033[38;5;161m⬇ SERVICE DOWN${reset}"
+
+DEPENDENCY_POLL_INTERVAL=${DEPENDENCY_POLL_INTERVAL:-2}
+DEPENDENCY_LOG_VERBOSE=${DEPENDENCY_LOG_VERBOSE:-true}
+DEPENDENCY_CONNECT_TIMEOUT=${DEPENDENCY_CONNECT_TIMEOUT:-5}
+
+CURLE_UNSUPPORTED_PROTOCOL=1
+CURLE_URL_MALFORMAT=3
+CURLE_COULDNT_RESOLVE_HOST=6
+CURLE_COULDNT_CONNECT=7
+CURLE_REMOTE_ACCESS_DENIED=9
+CURLE_TIMEOUT=28
+
+
+trap ctrl_c INT
+
+ctrl_c() {
+        echo -e "${red}» Process interrupted via ${orange}CTRL-C${reset}"
+        exit 2
+}
+
+e() {
+    [[ $DEPENDENCY_LOG_VERBOSE == true ]] && echo $*
+}
+
+curl_check() {
+    url="$1"
+    i=0
+    while true; do
+        i=$(($i+1))
+        e -en "${cyan}» $i ${blueish}$url${gray} ${reset}"
+        exit_code=$(curl --connect-timeout $DEPENDENCY_CONNECT_TIMEOUT -ILs -o /dev/null -w "%{http_code}" "$url")
+        exit_status=$?
+
+        if [[ "$exit_status" == $CURLE_UNSUPPORTED_PROTOCOL ]]; then
+            e -e "${red}Unsupported protocol, can't continue!${reset}"
+            exit $exit_status
+        elif [[ "$exit_status" == $CURLE_URL_MALFORMAT ]]; then
+            e -e "${red}Invalid URL format, can't continue!${reset}"
+            exit $exit_status
+        elif [[ "$exit_status" == $CURLE_COULDNT_RESOLVE_HOST ]]; then
+            e -e "${orange}host not found${reset}"
+        elif [[ "$exit_status" == $CURLE_COULDNT_CONNECT ]]; then
+            e -e "${orange}couldn't connect${reset}"
+        elif [[ "$exit_status" == $CURLE_REMOTE_ACCESS_DENIED ]]; then
+            e -e "${orange}access denied: $exit_code${reset}"
+        elif [[ "$exit_status" == $CURLE_TIMEOUT ]]; then
+            e -e "${orange}timeout${reset}"
+        elif [[ "$exit_status" != "0" ]]; then
+            e -e "${red}exit $exit_status${reset}"
+        elif  [[ "$exit_code" == 2* ]]; then
+            e -e "${green}$exit_code${reset} ${up}"
+            break
+        else
+            e -e"${orange}$exit_code${reset} ${down}"
+        fi
+        e -e "\t${gray}Sleeping for $DEPENDENCY_POLL_INTERVAL...${reset}"
+        sleep $DEPENDENCY_POLL_INTERVAL
+    done
+}
+
+postgres_check() {
+    # url looks like this: postgres://wit@wit-db:5432
+    url="$1"
+    # First remove the prefix
+    prefix="postgres://"
+    url="${url#$prefix}"
+    username=""
+    if [[ "$url" == *@* ]]; then
+        username=$(echo "$url" | cut -f1 -d@)
+        username="-U $username"
+        url=$(echo "$url" | cut -f2 -d@)
+    fi
+    port="-p 5432"
+    if [[ "$url" == *:* ]]; then
+        port=$(echo "$url" | cut -f2 -d:)
+        port="-p $port"
+        url=$(echo "$url" | cut -f1 -d:)
+    fi
+    host="-h $url"
+    url="$1"
+
+    i=0
+    while true; do
+        i=$(($i+1))
+        e -en "${cyan}» $i ${blueish}$url${gray} ${reset}"
+        pg_isready $host $port $username -t $DEPENDENCY_CONNECT_TIMEOUT > /dev/null
+        exit_status=$?
+
+        if  [[ "$exit_status" == 0 ]]; then
+            e -e "${green}connected${reset} ${up}"
+            break
+        else
+            e -e "${orange}exit $exit_status${reset} ${down}"
+        fi
+        e -e "\t${gray}Sleeping for $DEPENDENCY_POLL_INTERVAL...${reset}"
+        sleep $DEPENDENCY_POLL_INTERVAL
+    done
+}
+
+tcp_check() {
+    # url looks like this: tcp://www.google.com:80
+    url="$1"
+    # First remove the prefix
+    prefix="tcp://"
+    url="${url#$prefix}"
+
+    if [[ ! "$url" == *:* ]]; then
+        e -e "${red}» No host or port specified for TCP connection${reset}"
+        exit 100
+    fi
+
+    host=""
+    port=""
+    # Support for IPv4 & IPV6
+    port=$(echo "$url" | rev | cut -f1 -d: | rev)
+    host=$(echo "$url" | rev | cut -f2- -d: | rev)
+    url="$1"
+
+    if [[ -z "$host" ]]; then
+        e -e "${red}» No host specified for TCP connection${reset}"
+        exit 100
+    fi
+    if [[ -z "$port" ]]; then
+        e -e "${red}» No port specified for TCP connection${reset}"
+        exit 100
+    fi
+
+    i=0
+    while true; do
+        i=$(($i+1))
+        e -en "${cyan}» $i ${blueish}$url${gray} ${reset}"
+        nc -w $DEPENDENCY_CONNECT_TIMEOUT $host $port < /dev/null
+        exit_status=$?
+
+        if  [[ "$exit_status" == 0 ]]; then
+            e -e "${green}connected${reset} ${up}"
+            break
+        else
+            e -e "${orange}exit $exit_status${reset} ${down}"
+        fi
+        e -e "\t${gray}Sleeping for $DEPENDENCY_POLL_INTERVAL...${reset}"
+        sleep $DEPENDENCY_POLL_INTERVAL
+    done
+}
+
+
+for i in "$@"; do
+    if [[ "$i" == http://* || "$i" == https://* || "$i" == ftp://* ]]; then
+        curl_check "$i"
+    elif [[ "$i" == postgres://* ]]; then
+        postgres_check "$i"
+    elif [[ "$i" == tcp://* ]]; then
+        tcp_check "$i"
+    else
+        echo -en "${red}» Unknown URL: ${orange}$i${reset}"
+        exit 1 
+    fi
+done
