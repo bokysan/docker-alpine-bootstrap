@@ -7,6 +7,7 @@ and debugging your containers.
 
 If you are missing anything, send in a merge request. Let's just not overdoit, folks.
 Currently available:
+- kubectl
 - awk (gawk)
 - bash
 - busybox (with aliaes for lots of tools...)
