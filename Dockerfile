@@ -9,6 +9,7 @@ RUN   \
       curl --retry 5 --max-time 300 --connect-timeout 10 -fsSL \
             https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl \
             -o /usr/local/bin/kubectl && \
+      chmod +x /usr/local/bin/kubectl && \
       pip install awscli --upgrade && \
       apk -v --purge del py-pip && \
       (rm "/tmp/"* 2>/dev/null || true) && (rm -rf /var/cache/apk/* 2>/dev/null || true)
