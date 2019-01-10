@@ -8,7 +8,6 @@ and debugging your containers.
 If you are missing anything, send in a merge request. Let's just not overdoit, folks.
 Currently available:
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
-- [aws cli](https://aws.amazon.com/cli/)
 - awk (gawk)
 - bash
 - busybox (with aliaes for lots of tools...)
