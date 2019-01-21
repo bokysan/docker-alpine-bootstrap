@@ -39,9 +39,33 @@ The following variables can be used to control the service:
 | `DEPENDENCY_LOG_VERBOSE` | `true`/`false` | `true` | Puts out a little extra logging into output. (like *fabric8*) |
 | `DEPENDENCY_POLL_INTERVAL` | A positive integer | 2 | The interval, in seconds, between each poll of the dependency check. (like *fabric8*) |
 | `DEPENDENCY_CONNECT_TIMEOUT` | A positive integer | 5 | How long to wait before the service timeouts, in seconds. (not possible with *fabric8*) |
+| `SCRIPT_TIMEOUT` | A positive integer | 0 | A total time the script is allowed to run. 0 means "no timeout" |
 
 ## Usage
-This utility is used as part of the [init containers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/).  An example is given below.
+This utility is used as part of the [init containers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/). 
+
+Usage:
+```
+
+    wait-for-service [parameters] [tcp://host:port | postgres://[user@]host[:port] | http[s]://host[:port] | ... ] [-- command args]
+
+    $0 will wait for the specified service to be up and running before returning / exiting from the function.
+    It will optionally run the command(s) at the end of the line after the commnad completes successfully.
+
+    Available parameters:
+    -t | --timeout=TIMEOUT            How long to wait, in seconds, before ending the script. "0" means no timeout.
+    -v | --verbose                    Be verbose. Alias for DEPENDENCY_LOG_VERBOSE=true
+    -q | --quiet                      Be quiet. Alias for DEPENDENCY_LOG_VERBOSE=false
+    -c | --connection-timeout=TIMEOUT Alias for DEPENDENCY_CONNECT_TIMEOUT
+
+    tcp://host:port                   Wait for the given service to be available at specified host/port. Uses Netcat.
+    postgres://[user@]host[:port]     Wait for PostgreSQL to be available. Uses pg_isready.
+    http[s]://host[:port]             Wait for HTTP(s) service to be ready. Uses curl.
+    
+    -- COMMAND ARGS                   Execute command with args after the test finishes
+```
+
+An example is given below:
 
 ```yaml
 spec:
@@ -64,14 +88,18 @@ spec:
 
 The following protocols are supported:
 * **HTTP**: Anything that starts with `http://` or `https://` is considered a HTTP protocol. 
-  [curl](https://curl.haxx.se/) is used to make a `HTTP HEAD`request. A service is considered up if:
+  [curl](https://curl.haxx.se/) is used to make a `HTTP HEAD`request. Automatically falls back
+  to *TCP* check if `curl` is not available.
+  A service is considered up if:
   * It doesn't time out
   * It returns a result in the range `2xx`
+
 * **POSTGRES**: The syntax is: `postgres://[<user>@]<host>[:<port>]`. 
   The given postgres url is parsed for username, host, and port and passed to the 
   [pg_isready](https://www.postgresql.org/docs/10/static/app-pg-isready.html) utility. 
+  Automatically falls back to *TCP* check if `pg_isready` is not avaiable.
   The db is considered up when *pg_isready returns a zero exit code*.
 * **TCP**: The syntax is: `tcp://<host>:<port>`. [Netcat](http://netcat.sourceforge.net/) is used to 
   connect to the service. Service is considered up when *netcat* successfully connects and 
-  *return a zero exit code*.
+  *return a zero exit code*. If `netcat` is not avaialbe, uses `/dev/tcp` to send open up a port.
 
