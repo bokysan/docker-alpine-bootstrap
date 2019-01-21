@@ -46,17 +46,22 @@ This utility is used as part of the [init containers](https://kubernetes.io/docs
 
 Usage:
 ```
+  wait-for-service [parameters] [tcp://host:port | postgres://[user@]host[:port] | http[s]://host[:port] | ... ] [-- command args]
 
-    wait-for-service [parameters] [tcp://host:port | postgres://[user@]host[:port] | http[s]://host[:port] | ... ] [-- command args]
-
-    $0 will wait for the specified service to be up and running before returning / exiting from the function.
+  wait-for-service will wait for the specified service to be up and running before returning / exiting from the function.
     It will optionally run the command(s) at the end of the line after the commnad completes successfully.
 
     Available parameters:
-    -t | --timeout=TIMEOUT            How long to wait, in seconds, before ending the script. "0" means no timeout.
-    -v | --verbose                    Be verbose. Alias for DEPENDENCY_LOG_VERBOSE=true
-    -q | --quiet                      Be quiet. Alias for DEPENDENCY_LOG_VERBOSE=false
-    -c | --connection-timeout=TIMEOUT Alias for DEPENDENCY_CONNECT_TIMEOUT
+    -t | --timeout=TIMEOUT            Script timeout parameter
+    -v | --verbose                    Be verbose. 
+                                      Alias for DEPENDENCY_LOG_VERBOSE=true
+    -q | --quiet                      Be quiet. 
+                                      Alias for DEPENDENCY_LOG_VERBOSE=false
+    -c | --connection-timeout=TIMEOUT Timeout before the service is deemed inaccessible (default is 5 seconds).
+                                      Alias for DEPENDENCY_CONNECT_TIMEOUT
+    -p | --poll-interval=INTERVAL     Interval in seconds between polling retries.
+                                      Alias for DEPENDENCY_POLL_INTERVAL
+    -C | --colo[u]r                   Force colour output.
 
     tcp://host:port                   Wait for the given service to be available at specified host/port. Uses Netcat.
     postgres://[user@]host[:port]     Wait for PostgreSQL to be available. Uses pg_isready.

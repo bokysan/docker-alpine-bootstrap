@@ -11,6 +11,13 @@
 # - postgres: postgres://<user>@<host>:<port> - uses pg_isready
 # - tcp: tcp://<host>:<port> - tries to succesfully connect to the specific host
 
+reset=""
+green=""
+yellow=""
+red=""
+orange=""
+emphasis=""
+
 up="⬆ SERVICE UP"
 down="⬇ SERVICE DOWN"
 
@@ -24,33 +31,6 @@ contains() {
         return 1    # $substring is not in $string
     fi
 }
-if test -t 1; then
-	# Quick and dirty test for color support
-	if contains "$TERM" "256" || contains "$COLORTERM" "256"  || contains "$COLORTERM" "color" || contains "$COLORTERM" "24bit"; then
-    red="\033[38;5;196m"
-    yellow="\033[38;5;184m"
-    orange="\033[38;5;209m"
-    green="\033[38;5;35m"
-    gray="\033[38;5;243m"
-    blueish="\033[38;5;109m"
-    cyan="\033[38;5;87m"
-    reset="\033[0m"
-
-    up="\033[38;5;118m⬆ SERVICE UP${reset}"
-    down="\033[38;5;161m⬇ SERVICE DOWN${reset}"
-	elif contains "$TERM" "xterm"; then
-		reset="\033[0m"
-		green="\033[32m"
-		yellow="\033[33m"
-		red="\033[31;1m"
-		orange="\033[31m"
-
-		emphasis="$(tput bold)"
-
-    up="${green}⬆ SERVICE UP${reset}"
-    down="${red}⬇ SERVICE DOWN${reset}"
-	fi
-fi
 
 SCRIPT_TIMEOUT=${SCRIPT_TIMEOUT:0}
 DEPENDENCY_POLL_INTERVAL=${DEPENDENCY_POLL_INTERVAL:-2}
@@ -102,9 +82,15 @@ Usage:
 
     Available parameters:
     -t | --timeout=TIMEOUT            Script timeout parameter
-    -v | --verbose                    Be verbose
-    -q | --quiet                      Be quiet
-    -c | --connection-timeout=TIMEOUT
+    -v | --verbose                    Be verbose. 
+                                      Alias for DEPENDENCY_LOG_VERBOSE=true
+    -q | --quiet                      Be quiet. 
+                                      Alias for DEPENDENCY_LOG_VERBOSE=false
+    -c | --connection-timeout=TIMEOUT Timeout before the service is deemed inaccessible (default is 5 seconds).
+                                      Alias for DEPENDENCY_CONNECT_TIMEOUT
+    -p | --poll-interval=INTERVAL     Interval in seconds between polling retries.
+                                      Alias for DEPENDENCY_POLL_INTERVAL
+    -C | --colo[u]r                   Force colour output.
 
     tcp://host:port                   Wait for the given service to be available at specified host/port. Uses Netcat.
     postgres://[user@]host[:port]     Wait for PostgreSQL to be available. Uses pg_isready.
@@ -190,7 +176,7 @@ curl_check() {
     else
         e -e"${orange}$exit_code${reset} ${down}"
     fi
-    e -e "\t${gray}Sleeping for $DEPENDENCY_POLL_INTERVAL...${reset}"
+    # e -e "\t${gray}Sleeping for $DEPENDENCY_POLL_INTERVAL...${reset}"
     sleep $DEPENDENCY_POLL_INTERVAL
     RUNTIME=$(( $RUNTIME + $DEPENDENCY_POLL_INTERVAL ))
   done
@@ -268,7 +254,7 @@ postgres_check() {
     else
         e -e "${orange}exit $exit_status${reset} ${down}"
     fi
-    e -e "\t${gray}Sleeping for $DEPENDENCY_POLL_INTERVAL...${reset}"
+    # e -e "\t${gray}Sleeping for $DEPENDENCY_POLL_INTERVAL...${reset}"
     sleep $DEPENDENCY_POLL_INTERVAL
     RUNTIME=$(( $RUNTIME + $DEPENDENCY_POLL_INTERVAL ))
   done
@@ -336,7 +322,7 @@ tcp_check() {
     else
         e -e "${orange}exit $exit_status${reset} ${down}"
     fi
-    e -e "\t${gray}Sleeping for $DEPENDENCY_POLL_INTERVAL...${reset}"
+    # e -e "\t${gray}Sleeping for $DEPENDENCY_POLL_INTERVAL...${reset}"
     sleep $DEPENDENCY_POLL_INTERVAL
     RUNTIME=$(( $RUNTIME + $DEPENDENCY_POLL_INTERVAL ))
   done
@@ -364,7 +350,7 @@ dev_check() {
     else
         e -e "${orange}exit $exit_status${reset} ${down}"
     fi
-    e -e "\t${gray}Sleeping for $DEPENDENCY_POLL_INTERVAL...${reset}"
+    # e -e "\t${gray}Sleeping for $DEPENDENCY_POLL_INTERVAL...${reset}"
     sleep $DEPENDENCY_POLL_INTERVAL
     RUNTIME=$(( $RUNTIME + $DEPENDENCY_POLL_INTERVAL ))
   done
@@ -402,6 +388,10 @@ fi
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+      -C | --color | --colour)
+        FORCE_COLOUR=1
+        shift 1
+        ;;
       -q | --quiet)
         DEPENDENCY_LOG_VERBOSE=0
         shift 1
@@ -432,6 +422,17 @@ while [[ $# -gt 0 ]]; do
         e -e "${gray}» Connection timeout set to: ${orange}$DEPENDENCY_CONNECT_TIMEOUT${reset}"
         shift 1
         ;;
+      -p)
+        DEPENDENCY_POLL_INTERVAL="$2"
+        e -e "${gray}» Connection timeout set to: ${orange}$DEPENDENCY_POLL_INTERVAL${reset}"
+        if [[ $DEPENDENCY_POLL_INTERVAL == "" ]]; then break; fi
+        shift 2
+        ;;
+      --poll-interval=*)
+        DEPENDENCY_POLL_INTERVAL="${1#*=}"
+        e -e "${gray}» Poll interval set to: ${orange}$DEPENDENCY_POLL_INTERVAL${reset}"
+        shift 1
+        ;;
       *://*)
         CHECKS+=("$1")
         shift
@@ -450,6 +451,35 @@ while [[ $# -gt 0 ]]; do
         ;;
   esac
 done
+
+if [[ $FORCE_COLOUR -gt 0 ]] || test -t 1; then
+	# Quick and dirty test for color support
+	if [[ $FORCE_COLOUR -gt 0 ]] || contains "$TERM" "256" || contains "$COLORTERM" "256"  || contains "$COLORTERM" "color" || contains "$COLORTERM" "24bit"; then
+    red="\033[38;5;196m"
+    yellow="\033[38;5;184m"
+    orange="\033[38;5;209m"
+    green="\033[38;5;35m"
+    gray="\033[38;5;243m"
+    blueish="\033[38;5;109m"
+    cyan="\033[38;5;87m"
+    reset="\033[0m"
+
+    up="\033[38;5;118m⬆ SERVICE UP${reset}"
+    down="\033[38;5;161m⬇ SERVICE DOWN${reset}"
+	elif contains "$TERM" "xterm"; then
+		reset="\033[0m"
+		green="\033[32m"
+		yellow="\033[33m"
+		red="\033[31;1m"
+		orange="\033[31m"
+
+		emphasis="$(tput bold)"
+
+    up="${green}⬆ SERVICE UP${reset}"
+    down="${red}⬇ SERVICE DOWN${reset}"
+	fi
+fi
+
 
 if [ -n "$SCRIPT_TIMEOUT" ] && [[ $SCRIPT_TIMEOUT -gt 0 ]] && command -v timeout 2>/dev/null; then
   timeout $SCRIPT_TIMEOUT do_the_checks
