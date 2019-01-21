@@ -8,18 +8,15 @@ and debugging your own containers.
 If you are missing anything, send in a merge request. Let's just not overdoit, folks.
 Currently available:
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
-- awk (gawk)
-- bash
-- busybox (with aliaes for lots of tools...)
-- bzip2
-- curl
-- gzip / gunzip
-- sed
-- wget
-- xz
-- postgres client (psql)
-- libressl (openssl fork)
-- vim (who can live without it)
+- awk ([gawk](https://www.gnu.org/software/gawk/manual/gawk.html))
+- [bash](https://www.gnu.org/software/bash/)
+- [busybox](https://www.busybox.net) (with aliases for lots of tools...)
+- [gzip](https://www.gnu.org/software/gzip/), [bzip2](http://www.bzip.org/), and [xz](https://tukaani.org/xz/)
+- [curl](https://curl.haxx.se/) and [wget](https://www.gnu.org/software/wget/)
+- [sed](https://www.gnu.org/software/sed/)
+- postgres client ([psql](https://www.postgresql.org/docs/10/app-psql.html))
+- [libressl](https://www.libressl.org/) (openssl fork)
+- [vim](https://www.vim.org/) (who can live without it)
 
 I might consider adding python and/or perl in the future, but they just seem too big ATM.
 
