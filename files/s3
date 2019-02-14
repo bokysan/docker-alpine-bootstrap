@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# vim: set tabstop=2 softtabstop=2 shiftwidth=2 expandtab:
 # Download a file from S3
 set -e
 
@@ -24,6 +25,7 @@ fi
 payload=""
 
 payload_hash() {
+  set +e
   if command -v shasum  >/dev/null 2>&1; then
     local output=$(echo -n "${payload}" | shasum -ba 256)
     echo "${output%% *}"
@@ -34,6 +36,7 @@ payload_hash() {
     local output=$(echo -n "${payload}" | openssl dgst -sha256)
     echo "${output##* }"
   fi
+  set -e
 }
 
 canonical_request() {
@@ -50,6 +53,7 @@ canonical_request() {
 }
 
 canonical_request_hash() {
+  set +e
   if command -v shasum  >/dev/null 2>&1; then
     local output=$(canonical_request | shasum -a 256)
     echo "${output%% *}"
@@ -60,6 +64,7 @@ canonical_request_hash() {
     local output=$(canonical_request | openssl dgst -sha256)
     echo "${output##* }"
   fi
+  set -e
 }
 
 

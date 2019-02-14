@@ -1,9 +1,31 @@
 #!/usr/bin/env bash
 # Return a docker login line
-set -e
+set +e
+ECR_GET_AUTHORIZATION_TOKEN="$( cd "$(dirname "$0")" ; pwd -P )/ecr-get-authorization-token"
+if [ ! -x "$ECR_GET_AUTHORIZATION_TOKEN" ]; then
+    ECR_GET_AUTHORIZATION_TOKEN="$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )/ecr-get-authorization-token"
+fi
+if [ ! -x "$ECR_GET_AUTHORIZATION_TOKEN" ]; then
+    ECR_GET_AUTHORIZATION_TOKEN="/usr/local/bin/ecr-get-authorization-token"
+fi
+if [ ! -x "$ECR_GET_AUTHORIZATION_TOKEN" ]; then
+    ECR_GET_AUTHORIZATION_TOKEN="./ecr-get-authorization-token"
+fi
+if [ ! -x "$ECR_GET_AUTHORIZATION_TOKEN" ]; then
+    ECR_GET_AUTHORIZATION_TOKEN="ecr-get-authorization-token"
+fi
 
-data=$(ecr-get-authorization-token)
-token="$(echo "$data" | jq '.authorizationData[0].authorizationToken' | base64 -d -)"
+decode="base64 -d -"
+if ! echo "" | $decode >/dev/null 2>&1; then
+    decode="base64 --decode"
+fi
+if ! echo "" | $decode >/dev/null 2>&1; then
+    decode="openssl base64 -d"
+fi
+
+set -e
+data=$("$ECR_GET_AUTHORIZATION_TOKEN")
+token="$(echo "$data" | jq -r '.authorizationData[0].authorizationToken' | $decode)"
 export ECR_USERNAME=$(echo "$token" | cut -d: -f1)
 export ECR_PASSWORD=$(echo "$token" | cut -d: -f2-)
 export ECR_REGISTRY=$(echo "$data" | jq '.authorizationData[0].proxyEndpoint')
