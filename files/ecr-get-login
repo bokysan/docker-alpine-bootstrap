@@ -3,9 +3,6 @@
 set +e
 ECR_GET_AUTHORIZATION_TOKEN="$( cd "$(dirname "$0")" ; pwd -P )/ecr-get-authorization-token"
 if [ ! -x "$ECR_GET_AUTHORIZATION_TOKEN" ]; then
-    ECR_GET_AUTHORIZATION_TOKEN="$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )/ecr-get-authorization-token"
-fi
-if [ ! -x "$ECR_GET_AUTHORIZATION_TOKEN" ]; then
     ECR_GET_AUTHORIZATION_TOKEN="/usr/local/bin/ecr-get-authorization-token"
 fi
 if [ ! -x "$ECR_GET_AUTHORIZATION_TOKEN" ]; then
