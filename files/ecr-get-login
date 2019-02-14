@@ -2,11 +2,10 @@
 # Return a docker login line
 set -e
 
-path="$(dirname $0)"
-data=$($path/ecr-get-authorization-token)
+data=$(ecr-get-authorization-token)
 token="$(echo "$data" | jq '.authorizationData[0].authorizationToken' | base64 -d -)"
-username=$(echo "$token" | cut -d: -f1)
-password=$(echo "$token" | cut -d: -f2-)
-registry=$(echo "$data" | jq '.authorizationData[0].proxyEndpoint')
+export ECR_USERNAME=$(echo "$token" | cut -d: -f1)
+export ECR_PASSWORD=$(echo "$token" | cut -d: -f2-)
+export ECR_REGISTRY=$(echo "$data" | jq '.authorizationData[0].proxyEndpoint')
 
-echo "docker login -u $username -p $password $registry"
+echo "docker login -u $ECR_USERNAME -p $ECR_PASSWORD $ECR_REGISTRY"
