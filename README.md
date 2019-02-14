@@ -19,10 +19,14 @@ Currently available:
 - [psql](https://www.postgresql.org/docs/10/app-psql.html) - a PostgreSQL client
 - [sed](https://www.gnu.org/software/sed/)
 - [vim](https://www.vim.org/) (who can live without it)
+
+AWS scripts:
 - *s3* A bash script for downloading secure files from AWS s3 without the need for the full fledged AWS client
 - *ecr-get-authorization-token* A bash script for getting AWS ECR repository authorization token without the need for
   AWS client.
 - *ecr-get-login* A script that mimics the `aws ecr get-login` output
+- *ecr-describe-repositories* is a call to [Describe Repositories](https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_DescribeRepositories.html#ECR-DescribeRepositories-request-maxResults) API
+- *esc-create-repository* is a call to [Create Repository](https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_CreateRepository.html) API
 
 # AWS
 
