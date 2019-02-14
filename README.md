@@ -2,23 +2,43 @@
 
 A basic Alpine image with a few tools to enable you to better start of your work.
 
-Mostly useful for Kubernetes [init containers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/)
-and debugging your own containers.
+Mostly useful for Docker and Kubernetes 
+[init containers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/)
+as well as debugging your own containers.
 
 If you are missing anything, send in a merge request. Let's just not overdoit, folks.
 Currently available:
-- [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 - awk ([gawk](https://www.gnu.org/software/gawk/manual/gawk.html))
 - [bash](https://www.gnu.org/software/bash/)
 - [busybox](https://www.busybox.net) (with aliases for lots of tools...)
-- [gzip](https://www.gnu.org/software/gzip/), [bzip2](http://www.bzip.org/), and [xz](https://tukaani.org/xz/)
 - [curl](https://curl.haxx.se/) and [wget](https://www.gnu.org/software/wget/)
-- [sed](https://www.gnu.org/software/sed/)
-- postgres client ([psql](https://www.postgresql.org/docs/10/app-psql.html))
+- [gzip](https://www.gnu.org/software/gzip/), [bzip2](http://www.bzip.org/), and [xz](https://tukaani.org/xz/)
+- [jq](https://stedolan.github.io/jq/) A lightweight and flexible command-line JSON processor
+- [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 - [libressl](https://www.libressl.org/) (openssl fork)
+- [psql](https://www.postgresql.org/docs/10/app-psql.html) - a PostgreSQL client
+- [sed](https://www.gnu.org/software/sed/)
 - [vim](https://www.vim.org/) (who can live without it)
+- *s3* A bash script for downloading secure files from AWS s3 without the need for the full fledged AWS client
+- *get-authorization-token* A bash script for getting AWS ECR repository authorization token without the need for
+  AWS client.
 
-I might consider adding python and/or perl in the future, but they just seem too big ATM.
+# AWS
+
+These two scripts (*s3* and *get-authorization-token*) will require you set propery environment variables before
+invoking them, namely: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_REGION`. If you're an AWS user,
+you'll know what they eman.
+
+## Usage
+
+```
+export AWS_ACCESS_KEY_ID=xxx 
+export AWS_SECRET_ACCESS_KEY=yyy 
+export AWS_REGION=eu-central-2 
+
+s3 bucket path/file.ext > file.ext
+get-authorization-token
+```
 
 # Wait for service in Kubernetes
 

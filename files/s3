@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+# Download a file from S3
+set -e
+
+bucket="${1}"; shift
+src="${1}"; shift
+method="GET"
+service="s3"
+host="${bucket}.${service}.amazonaws.com"
+timestamp=$(date -u "+%Y-%m-%d %H:%M:%S")
+signed_headers="date;host;x-amz-content-sha256;x-amz-date"
+
+if [[ $(uname) == "Darwin" ]]; then
+  format="%Y-%m-%d %H:%M:%S"
+  iso_timestamp=$(date -ujf "${format}" "${timestamp}" "+%Y%m%dT%H%M%SZ")
+  date_scope=$(date -ujf "${format}" "${timestamp}" "+%Y%m%d")
+  date_header=$(date -ujf "${format}" "${timestamp}" "+%a, %d %h %Y %T %Z")
+else
+  iso_timestamp=$(date -ud "${timestamp}" "+%Y%m%dT%H%M%SZ")
+  date_scope=$(date -ud "${timestamp}" "+%Y%m%d")
+  date_header=$(date -ud "${timestamp}" "+%a, %d %h %Y %T %Z")
+fi
+
+payload=""
+
+payload_hash() {
+  if command -v shasum  >/dev/null 2>&1; then
+    local output=$(echo -n "${payload}" | shasum -ba 256)
+    echo "${output%% *}"
+  elif command -v sha256sum  >/dev/null 2>&1; then
+    local output=$(echo -n "${payload}" | sha256sum)
+    echo "${output%% *}"
+  else
+    local output=$(echo -n "${payload}" | openssl dgst -sha256)
+    echo "${output##* }"
+  fi
+}
+
+canonical_request() {
+  echo "${method}"
+  echo "/${src}"
+  echo ""
+  echo "date:${date_header}"
+  echo "host:${host}"
+  echo "x-amz-content-sha256:$(payload_hash)"
+  echo "x-amz-date:${iso_timestamp}"
+  echo ""
+  echo "${signed_headers}"
+  printf "$(payload_hash)"
+}
+
+canonical_request_hash() {
+  if command -v shasum  >/dev/null 2>&1; then
+    local output=$(canonical_request | shasum -a 256)
+    echo "${output%% *}"
+  elif command -v sha256sum  >/dev/null 2>&1; then
+    local output=$(canonical_request | sha256sum)
+    echo "${output%% *}"
+  else
+    local output=$(canonical_request | openssl dgst -sha256)
+    echo "${output##* }"
+  fi
+}
+
+
+string_to_sign() {
+  echo "AWS4-HMAC-SHA256"
+  echo "${iso_timestamp}"
+  echo "${date_scope}/${AWS_REGION}/${service}/aws4_request"
+  printf "$(canonical_request_hash)"
+}
+
+signature_key() {
+  local secret=$(printf "AWS4${AWS_SECRET_ACCESS_KEY?}" | hex_key)
+  local date_key=$(printf ${date_scope} | hmac_sha256 "${secret}" | hex_key)
+  local region_key=$(printf ${AWS_REGION} | hmac_sha256 "${date_key}" | hex_key)
+  local service_key=$(printf "${service}" | hmac_sha256 "${region_key}" | hex_key)
+  printf "aws4_request" | hmac_sha256 "${service_key}" | hex_key
+}
+
+hex_key() {
+  xxd -p -c 256
+}
+
+hmac_sha256() {
+  local hexkey=$1
+  openssl dgst -binary -sha256 -mac HMAC -macopt hexkey:${hexkey}
+}
+
+signature() {
+  string_to_sign | hmac_sha256 $(signature_key) | hex_key | sed "s/^.* //"
+}
+
+curl --tcp-nodelay -qsfL -X ${method} --data "${payload}" \
+  "https://${host}/${src}" \
+  -H "Authorization: AWS4-HMAC-SHA256 Credential=${AWS_ACCESS_KEY_ID?}/${date_scope}/${AWS_REGION}/${service}/aws4_request,SignedHeaders=${signed_headers},Signature=$(signature)" \
+  -H "Date: ${date_header}" \
+  -H "x-amz-content-sha256: $(payload_hash)" \
+  -H "x-amz-date: ${iso_timestamp}" \
+  $*
