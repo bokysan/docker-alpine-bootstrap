@@ -20,12 +20,13 @@ Currently available:
 - [sed](https://www.gnu.org/software/sed/)
 - [vim](https://www.vim.org/) (who can live without it)
 - *s3* A bash script for downloading secure files from AWS s3 without the need for the full fledged AWS client
-- *get-authorization-token* A bash script for getting AWS ECR repository authorization token without the need for
+- *ecr-get-authorization-token* A bash script for getting AWS ECR repository authorization token without the need for
   AWS client.
+- *ecr-get-login* A script that mimics the `aws ecr get-login` output
 
 # AWS
 
-These two scripts (*s3* and *get-authorization-token*) will require you set propery environment variables before
+The scripts (e.g. *s3* and *get-authorization-token*) will require you set propery environment variables before
 invoking them, namely: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_REGION`. If you're an AWS user,
 you'll know what they eman.
 
@@ -37,7 +38,8 @@ export AWS_SECRET_ACCESS_KEY=yyy
 export AWS_REGION=eu-central-2 
 
 s3 bucket path/file.ext > file.ext
-get-authorization-token
+ecr-get-authorization-token
+$(ect-get-login)
 ```
 
 # Wait for service in Kubernetes
