@@ -95,7 +95,7 @@ signature() {
   string_to_sign | hmac_sha256 $(signature_key) | hex_key | sed "s/^.* //"
 }
 
-curl --tcp-nodelay -qfL -X ${method} --data "${payload}" \
+curl --tcp-nodelay -qsfL -X ${method} --data "${payload}" \
   "https://${host}/${src}" \
   -H "Authorization: AWS4-HMAC-SHA256 Credential=${AWS_ACCESS_KEY_ID?}/${date_scope}/${AWS_REGION}/${service}/aws4_request,SignedHeaders=${signed_headers},Signature=$(signature)" \
   -H "Accept-Encoding: identity" \
