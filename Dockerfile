@@ -1,6 +1,5 @@
-FROM alpine:edge
+FROM alpine:latest
 LABEL maintainer="Bojan Cekrlic - https://github.com/bokysan/docker-alpine-bootstrap/"
-
 
 # Install basic set of tools
 RUN   \
