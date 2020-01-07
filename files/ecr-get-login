@@ -1,7 +1,16 @@
 #!/usr/bin/env bash
+# vim: set tabstop=2 softtabstop=2 shiftwidth=2 expandtab:
 # Return a docker login line
 set +e
-ECR_GET_AUTHORIZATION_TOKEN="$( cd "$(dirname "$0")" ; pwd -P )/ecr-get-authorization-token"
+
+if [ -n "${BASH_SOURCE[0]}" ]; then
+    SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+else
+    SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
+fi
+source "$SCRIPT_DIR/aws-functions"
+
+ECR_GET_AUTHORIZATION_TOKEN="$SCRIPT_DIR/ecr-get-authorization-token"
 if [ ! -x "$ECR_GET_AUTHORIZATION_TOKEN" ]; then
     ECR_GET_AUTHORIZATION_TOKEN="/usr/local/bin/ecr-get-authorization-token"
 fi
@@ -12,17 +21,9 @@ if [ ! -x "$ECR_GET_AUTHORIZATION_TOKEN" ]; then
     ECR_GET_AUTHORIZATION_TOKEN="ecr-get-authorization-token"
 fi
 
-decode="base64 -d -"
-if ! echo "" | $decode >/dev/null 2>&1; then
-    decode="base64 --decode"
-fi
-if ! echo "" | $decode >/dev/null 2>&1; then
-    decode="openssl base64 -d"
-fi
-
 set -e
 data=$("$ECR_GET_AUTHORIZATION_TOKEN")
-token="$(echo "$data" | jq -r '.authorizationData[0].authorizationToken' | $decode)"
+token="$(echo "$data" | jq -r '.authorizationData[0].authorizationToken' | $OPENSSL base64 -d)"
 export ECR_USERNAME=$(echo "$token" | cut -d: -f1)
 export ECR_PASSWORD=$(echo "$token" | cut -d: -f2-)
 export ECR_REGISTRY=$(echo "$data" | jq '.authorizationData[0].proxyEndpoint')
