@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+# vim: set tabstop=2 softtabstop=2 shiftwidth=2 expandtab:
+# Get credentials key for ECR from AWS without using the full blown aws client
+set -e
+
+if [ -n "${BASH_SOURCE[0]}" ]; then
+    SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+else
+    SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
+fi
+source "$SCRIPT_DIR/aws-functions"
+
+
+export src=""
+export method="POST"
+export service="ecr"
+export host="${service}.${AWS_REGION}.amazonaws.com"
+export x_amz_target="AmazonEC2ContainerRegistry_V20150921.BatchGetImage"
+
+declare -a IMAGE_IDS
+while (( "$#" )); do
+    _key="$1"
+    case "$_key" in
+        --)
+            # Stop processsing more arguments
+            shift
+            break
+            ;;
+        --repository-name)
+            test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
+            REPOSITORY_NAME="$2"
+            shift
+            ;;
+        --repository-name=*)
+            REPOSITORY_NAME="${_key##--repository-name=}"
+            shift
+            ;;
+        --image-ids)
+            test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
+            IMAGE_IDS+=("$2")
+            shift
+            ;;
+        --image-ids=*)
+            IMAGE_IDS+=("${_key##--image-ids=}")
+            shift
+            ;;
+        --query)
+            test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
+            QUERY="$2"
+            shift
+            ;;
+        --query=*)
+            QUERY="${_key##--query=}"
+            shift
+            ;;
+        --output)
+            test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
+            OUTPUT="$2"
+            shift
+            ;;
+        --output=*)
+            OUTPUT="${_key##--output=}"
+            shift
+            ;;
+    esac
+    shift
+done
+
+payload="{\"repositoryName\": \"$REPOSITORY_NAME\",\"imageIds\":["
+first=1
+for i in "${!IMAGE_IDS[@]}"; do
+  key=$(echo "${IMAGE_IDS[$i]}" | cut -f1 -d= | tr -d ' ')
+  value=$(echo "${IMAGE_IDS[$i]}" | cut -f2- -d=)
+  if [[ -z "$first" ]]; then
+    payload="$payload,"
+  else
+    first=""
+  fi
+  payload="$payload{\"$key\":\"$value\"}"
+done
+payload="$payload]}"
+
+out=`curl -i --tcp-nodelay -sL -X ${method} --data "${payload}" \
+  "https://${host}/${src}" \
+  -H "Authorization: AWS4-HMAC-SHA256 Credential=${AWS_ACCESS_KEY_ID?}/${date_scope}/${AWS_REGION}/${service}/aws4_request,SignedHeaders=$(all_signed_headers),Signature=$(signature)" \
+  -H "Accept-Encoding: identity" \
+  -H "Content-Type: application/x-amz-json-1.1" \
+  -H "Date: ${date_header}" \
+  -H "x-amz-content-sha256: $(payload_hash)" \
+  -H "x-amz-date: ${iso_timestamp}" \
+  -H "x-amz-target: ${x_amz_target}"`
+error=$?
+
+parse_curl_response "$error" "$out"

@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+# vim: set tabstop=2 softtabstop=2 shiftwidth=2 expandtab:
+# Get credentials key for ECR from AWS without using the full blown aws client
+
+if [ -n "${BASH_SOURCE[0]}" ]; then
+    SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+else
+    SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
+fi
+source "$SCRIPT_DIR/aws-functions"
+
+
+export src=""
+export method="POST"
+export service="ecr"
+export host="${service}.${AWS_REGION}.amazonaws.com"
+export x_amz_target="AmazonEC2ContainerRegistry_V20150921.PutImage"
+
+declare -a IMAGE_IDS
+while (( "$#" )); do
+    _key="$1"
+    case "$_key" in
+        --)
+            # Stop processsing more arguments
+            shift
+            break
+            ;;
+        --repository-name)
+            test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
+            REPOSITORY_NAME="$2"
+            shift
+            ;;
+        --repository-name=*)
+            REPOSITORY_NAME="${_key##--repository-name=}"
+            shift
+            ;;
+        --registry-id)
+            test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
+            REGISTRY_ID="$2"
+            shift
+            ;;
+        --registry-id=*)
+            REGISTRY_ID="${_key##--registry-id=}"
+            shift
+            ;;
+        --image-tag)
+            test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
+            IMAGE_TAG="$2"
+            shift
+            ;;
+        --image-tag=*)
+            IMAGE_TAG="${_key##--image-tag=}"
+            shift
+            ;;
+        --image-manifest)
+            test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
+            IMAGE_MANIFEST="$2"
+            shift
+            ;;
+        --image-manifest=*)
+            IMAGE_MANIFEST="${_key##--image-manifest=}"
+            shift
+            ;;
+    esac
+    shift
+done
+
+payload="{"
+payload="$payload\"imageManifest\":$(echo $IMAGE_MANIFEST | jq '. | tojson'),"
+payload="$payload\"imageTag\":\"$IMAGE_TAG\","
+
+if [[ -n "$REGISTRY_ID" ]]; then
+  payload="$payload\"registryId\":\"$REGISTRY_ID\","
+fi
+payload="$payload\"repositoryName\":\"$REPOSITORY_NAME\""
+payload="$payload}"
+
+out=`curl -i --tcp-nodelay -sL -X ${method} --data "${payload}" \
+  "https://${host}/${src}" \
+  -H 'Expect:' \
+  -H "Authorization: AWS4-HMAC-SHA256 Credential=${AWS_ACCESS_KEY_ID?}/${date_scope}/${AWS_REGION}/${service}/aws4_request,SignedHeaders=$(all_signed_headers),Signature=$(signature)" \
+  -H "Accept-Encoding: identity" \
+  -H "Content-Type: application/x-amz-json-1.1" \
+  -H "Date: ${date_header}" \
+  -H "x-amz-content-sha256: $(payload_hash)" \
+  -H "x-amz-date: ${iso_timestamp}" \
+  -H "x-amz-target: ${x_amz_target}"`
+error=$?
+
+parse_curl_response "$error" "$out"

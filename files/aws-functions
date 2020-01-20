@@ -155,3 +155,229 @@ hmac_sha256() {
 signature() {
   string_to_sign | hmac_sha256 $(signature_key) | hex_key | sed "s/^.* //"
 }
+
+
+curl_error_to_string() {
+  code="$1"
+  if [ "$code" == "0" ]; then
+    echo "CURLE_OK (0)"
+  elif [ "$code" == "1" ]; then
+    echo "CURLE_UNSUPPORTED_PROTOCOL (1)"
+  elif [ "$code" == "2" ]; then
+    echo "CURLE_FAILED_INIT (2)"
+  elif [ "$code" == "3" ]; then
+    echo "CURLE_URL_MALFORMAT (3)"
+  elif [ "$code" == "4" ]; then
+    echo "CURLE_NOT_BUILT_IN (4)"
+  elif [ "$code" == "5" ]; then
+    echo "CURLE_COULDNT_RESOLVE_PROXY (5)"
+  elif [ "$code" == "6" ]; then
+    echo "CURLE_COULDNT_RESOLVE_HOST (6)"
+  elif [ "$code" == "7" ]; then
+    echo "CURLE_COULDNT_CONNECT (7)"
+  elif [ "$code" == "8" ]; then
+    echo "CURLE_WEIRD_SERVER_REPLY (8)"
+  elif [ "$code" == "9" ]; then
+    echo "CURLE_REMOTE_ACCESS_DENIED (9)"
+  elif [ "$code" == "10" ]; then
+    echo "CURLE_FTP_ACCEPT_FAILED (10)"
+  elif [ "$code" == "11" ]; then
+    echo "CURLE_FTP_WEIRD_PASS_REPLY (11)"
+  elif [ "$code" == "12" ]; then
+    echo "CURLE_FTP_ACCEPT_TIMEOUT (12)"
+  elif [ "$code" == "13" ]; then
+    echo "CURLE_FTP_WEIRD_PASV_REPLY (13)"
+  elif [ "$code" == "14" ]; then
+    echo "CURLE_FTP_WEIRD_227_FORMAT (14)"
+  elif [ "$code" == "15" ]; then
+    echo "CURLE_FTP_CANT_GET_HOST (15)"
+  elif [ "$code" == "16" ]; then
+    echo "CURLE_HTTP2 (16)"
+  elif [ "$code" == "17" ]; then
+    echo "CURLE_FTP_COULDNT_SET_TYPE (17)"
+  elif [ "$code" == "18" ]; then
+    echo "CURLE_PARTIAL_FILE (18)"
+  elif [ "$code" == "19" ]; then
+    echo "CURLE_FTP_COULDNT_RETR_FILE (19)"
+  elif [ "$code" == "21" ]; then
+    echo "CURLE_QUOTE_ERROR (21)"
+  elif [ "$code" == "22" ]; then
+    echo "CURLE_HTTP_RETURNED_ERROR (22)"
+  elif [ "$code" == "23" ]; then
+    echo "CURLE_WRITE_ERROR (23)"
+  elif [ "$code" == "25" ]; then
+    echo "CURLE_UPLOAD_FAILED (25)"
+  elif [ "$code" == "26" ]; then
+    echo "CURLE_READ_ERROR (26)"
+  elif [ "$code" == "27" ]; then
+    echo "CURLE_OUT_OF_MEMORY (27)"
+  elif [ "$code" == "28" ]; then
+    echo "CURLE_OPERATION_TIMEDOUT (28)"
+  elif [ "$code" == "30" ]; then
+    echo "CURLE_FTP_PORT_FAILED (30)"
+  elif [ "$code" == "31" ]; then
+    echo "CURLE_FTP_COULDNT_USE_REST (31)"
+  elif [ "$code" == "33" ]; then
+    echo "CURLE_RANGE_ERROR (33)"
+  elif [ "$code" == "34" ]; then
+    echo "CURLE_HTTP_POST_ERROR (34)"
+  elif [ "$code" == "35" ]; then
+    echo "CURLE_SSL_CONNECT_ERROR (35)"
+  elif [ "$code" == "36" ]; then
+    echo "CURLE_BAD_DOWNLOAD_RESUME (36)"
+  elif [ "$code" == "37" ]; then
+    echo "CURLE_FILE_COULDNT_READ_FILE (37)"
+  elif [ "$code" == "38" ]; then
+    echo "CURLE_LDAP_CANNOT_BIND (38)"
+  elif [ "$code" == "39" ]; then
+    echo "CURLE_LDAP_SEARCH_FAILED (39)"
+  elif [ "$code" == "41" ]; then
+    echo "CURLE_FUNCTION_NOT_FOUND (41)"
+  elif [ "$code" == "42" ]; then
+    echo "CURLE_ABORTED_BY_CALLBACK (42)"
+  elif [ "$code" == "43" ]; then
+    echo "CURLE_BAD_FUNCTION_ARGUMENT (43)"
+  elif [ "$code" == "45" ]; then
+    echo "CURLE_INTERFACE_FAILED (45)"
+  elif [ "$code" == "47" ]; then
+    echo "CURLE_TOO_MANY_REDIRECTS (47)"
+  elif [ "$code" == "48" ]; then
+    echo "CURLE_UNKNOWN_OPTION (48)"
+  elif [ "$code" == "49" ]; then
+    echo "CURLE_TELNET_OPTION_SYNTAX (49)"
+  elif [ "$code" == "52" ]; then
+    echo "CURLE_GOT_NOTHING (52)"
+  elif [ "$code" == "53" ]; then
+    echo "CURLE_SSL_ENGINE_NOTFOUND (53)"
+  elif [ "$code" == "53" ]; then
+    echo "CURLE_SSL_ENGINE_SETFAILED (54)"
+  elif [ "$code" == "55" ]; then
+    echo "CURLE_SEND_ERROR (55)"
+  elif [ "$code" == "56" ]; then
+    echo "CURLE_RECV_ERROR (56)"
+  elif [ "$code" == "58" ]; then
+    echo "CURLE_SSL_CERTPROBLEM (58)"
+  elif [ "$code" == "59" ]; then
+    echo "CURLE_SSL_CIPHER (59)"
+  elif [ "$code" == "60" ]; then
+    echo "CURLE_PEER_FAILED_VERIFICATION (60)"
+  elif [ "$code" == "61" ]; then
+    echo "CURLE_BAD_CONTENT_ENCODING (61)"
+  elif [ "$code" == "62" ]; then
+    echo "CURLE_LDAP_INVALID_URL (62)"
+  elif [ "$code" == "63" ]; then
+    echo "CURLE_FILESIZE_EXCEEDED (63)"
+  elif [ "$code" == "64" ]; then
+    echo "CURLE_USE_SSL_FAILED (64)"
+  elif [ "$code" == "65" ]; then
+    echo "CURLE_SEND_FAIL_REWIND (65)"
+  elif [ "$code" == "66" ]; then
+    echo "CURLE_SSL_ENGINE_INITFAILED (66)"
+  elif [ "$code" == "67" ]; then
+    echo "CURLE_LOGIN_DENIED (67)"
+  elif [ "$code" == "68" ]; then
+    echo "CURLE_TFTP_NOTFOUND (68)"
+  elif [ "$code" == "69" ]; then
+    echo "CURLE_TFTP_PERM (69)"
+  elif [ "$code" == "70" ]; then
+    echo "CURLE_REMOTE_DISK_FULL (70)"
+  elif [ "$code" == "71" ]; then
+    echo "CURLE_TFTP_ILLEGAL (71)"
+  elif [ "$code" == "72" ]; then
+    echo "CURLE_TFTP_UNKNOWNID (72)"
+  elif [ "$code" == "73" ]; then
+    echo "CURLE_REMOTE_FILE_EXISTS (73)"
+  elif [ "$code" == "74" ]; then
+    echo "CURLE_TFTP_NOSUCHUSER (74)"
+  elif [ "$code" == "75" ]; then
+    echo "CURLE_CONV_FAILED (75)"
+  elif [ "$code" == "76" ]; then
+    echo "CURLE_CONV_REQD (76)"
+  elif [ "$code" == "77" ]; then
+    echo "CURLE_SSL_CACERT_BADFILE (77)"
+  elif [ "$code" == "78" ]; then
+    echo "CURLE_REMOTE_FILE_NOT_FOUND (78)"
+  elif [ "$code" == "79" ]; then
+    echo "CURLE_SSH (79)"
+  elif [ "$code" == "80" ]; then
+    echo "CURLE_SSL_SHUTDOWN_FAILED (80)"
+  elif [ "$code" == "81" ]; then
+    echo "CURLE_AGAIN (81)"
+  elif [ "$code" == "82" ]; then
+    echo "CURLE_SSL_CRL_BADFILE (82)"
+  elif [ "$code" == "83" ]; then
+    echo "CURLE_SSL_ISSUER_ERROR (83)"
+  elif [ "$code" == "84" ]; then
+    echo "CURLE_FTP_PRET_FAILED (84)"
+  elif [ "$code" == "85" ]; then
+    echo "CURLE_RTSP_CSEQ_ERROR (85)"
+  elif [ "$code" == "86" ]; then
+    echo "CURLE_RTSP_SESSION_ERROR (86)"
+  elif [ "$code" == "87" ]; then
+    echo "CURLE_FTP_BAD_FILE_LIST (87)"
+  elif [ "$code" == "88" ]; then
+    echo "CURLE_CHUNK_FAILED (88)"
+  elif [ "$code" == "89" ]; then
+    echo "CURLE_NO_CONNECTION_AVAILABLE (89)"
+  elif [ "$code" == "90" ]; then
+    echo "CURLE_SSL_PINNEDPUBKEYNOTMATCH (90)"
+  elif [ "$code" == "91" ]; then
+    echo "CURLE_SSL_INVALIDCERTSTATUS (91)"
+  elif [ "$code" == "92" ]; then
+    echo "CURLE_HTTP2_STREAM (92)"
+  elif [ "$code" == "93" ]; then
+    echo "CURLE_RECURSIVE_API_CALL (93)"
+  elif [ "$code" == "94" ]; then
+    echo "CURLE_AUTH_ERROR (94)"
+  elif [ "$code" == "95" ]; then
+    echo "CURLE_HTTP3 (95)"
+  elif [ "$code" == "96" ]; then
+    echo "CURLE_QUIC_CONNECT_ERROR (96)"
+  else
+    echo "CURLE_UNKNOWN_ERROR ($code)"
+  fi
+}
+
+parse_curl_response() {
+  error="$1"
+  out="$2"
+
+  head=$(echo "$out" | awk '/^\r$/{exit} {print $0}')
+  http_status=$(echo "$head" | head -n1)
+  body=$(echo "$out" | awk 'BEGIN{ BODY=0 } /^\r$/{BODY=1} { if (BODY==1) { BODY=2 } else if (BODY==2) { print $0 }}')
+
+  if [[ "$error" == "0" ]]; then
+    code=$(echo "$head" | head -n1 | cut -f2 -d\ )
+    if [[ $code -ge 400 ]]; then
+      error="22"
+    fi
+  fi
+
+  if [[ "$error" == "22" ]]; then
+  # echo "$head" | grep -q "application/x-amz-json-1.1" &&
+    type=$(echo "$body" | jq '.__type')
+    message=$(echo "$body" | jq '.message')
+    echo "An error occurred ($type) when calling the PutImage operation: $message" >&2
+    exit 255
+  fi
+
+  if [[ "$error" != "0" ]]; then
+    echo "Error: $(curl_error_to_string $error)" >&2
+    echo "$out" >&2
+    exit $error
+  fi
+
+  if [[ -n "$QUERY" ]]; then
+    if [[ "$OUTPUT" == "text" ]]; then
+      body=$(echo "$body" | jq "$QUERY" --raw-output)
+    else
+      body=$(echo "$body" | jq "$QUERY")
+    fi
+  fi
+
+  if [[ "$OUTPUT" == "text" ]]; then
+    body=$(echo "$body" | sed 's/\\n/\n/g')
+  fi
+
+  echo "$body"
+}
