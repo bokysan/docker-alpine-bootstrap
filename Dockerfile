@@ -1,5 +1,6 @@
-# ≡≡≡≡≡≡≡≡≡≡≡≡ Prepare downlaod ≡≡≡≡≡≡≡≡≡≡≡≡
-FROM alpine:latest AS downloader
+ARG ALPINE_VERSION=alpine:latest
+# ≡≡≡≡≡≡≡≡≡≡≡≡ Prepare downloader ≡≡≡≡≡≡≡≡≡≡≡≡
+FROM ${ALPINE_VERSION} AS downloader
 RUN apk update
 RUN apk add bash curl jq
 
@@ -19,7 +20,8 @@ FROM downloader AS wait-for-service
 COPY scripts/download-wait-for-service.sh /
 RUN sh /download-wait-for-service.sh
 
-FROM alpine:latest
+# ≡≡≡≡≡≡≡≡≡≡≡≡ Prepare the image ≡≡≡≡≡≡≡≡≡≡≡≡
+FROM ${ALPINE_VERSION}
 LABEL maintainer="Bojan Cekrlic - https://github.com/bokysan/docker-alpine-bootstrap/"
 
 # Install basic set of tools
