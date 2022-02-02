@@ -1,4 +1,4 @@
-name: Docker image v13
+name: Docker image
 
 on:
   push:
