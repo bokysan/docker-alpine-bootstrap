@@ -15,8 +15,10 @@ Currently available:
 - [gzip](https://www.gnu.org/software/gzip/), [bzip2](http://www.bzip.org/), and [xz](https://tukaani.org/xz/)
 - [jq](https://stedolan.github.io/jq/) A lightweight and flexible command-line JSON processor
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+- [helm](helm.sh/)
 - [libressl](https://www.libressl.org/) (openssl fork)
-- [psql](https://www.postgresql.org/docs/10/app-psql.html) - a PostgreSQL client
+- [psql](https://www.postgresql.org/docs/current/app-psql.html) - a PostgreSQL client
+- [mariadb-client](https://mariadb.com/kb/en/mysql-client/) - a PostgreSQL client
 - [sed](https://www.gnu.org/software/sed/)
 - [vim](https://www.vim.org/) (who can live without it)
 
