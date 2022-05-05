@@ -51,7 +51,7 @@ jobs:
             ${{ runner.os }}-single-buildx-
 
       - name: Login to DockerHub
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           username: 'boky'
           password: '${{ secrets.DOCKER_ACCESS_TOKEN }}'
