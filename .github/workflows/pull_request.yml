@@ -46,7 +46,7 @@ jobs:
             ${{ runner.os }}-single-buildx-
 
       - name: Build Alpine
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           context: .
           push: false
